@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schnuffelines Workout Tracker</title>
+    <title>Schnuffeline Workout Plan</title>
     <style>
         * {
             margin: 0;
@@ -315,12 +315,178 @@
             color: #9e9e9e;
             margin-top: 4px;
         }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                padding: 12px;
+            }
+
+            .header-left {
+                flex-direction: column;
+                width: 100%;
+                gap: 12px;
+            }
+
+            .logo {
+                font-size: 18px;
+                text-align: center;
+            }
+
+            .month-nav {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .month-nav button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .month-display {
+                font-size: 16px;
+                min-width: auto;
+            }
+
+            .mascot {
+                width: 60px;
+                height: 60px;
+            }
+
+            .container {
+                padding: 12px;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 16px;
+                padding: 16px;
+            }
+
+            .stat-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .stat-label {
+                font-size: 12px;
+            }
+
+            .calendar-grid {
+                gap: 0;
+            }
+
+            .day-header {
+                padding: 8px 4px;
+                font-size: 11px;
+            }
+
+            .day-cell {
+                min-height: 100px;
+                padding: 6px;
+            }
+
+            .day-number {
+                font-size: 12px;
+            }
+
+            .workout-item {
+                padding: 6px;
+                font-size: 11px;
+                gap: 6px;
+            }
+
+            .checkbox {
+                width: 16px;
+                height: 16px;
+            }
+
+            .workout-item.completed .checkbox::after {
+                font-size: 10px;
+            }
+
+            .add-workout-btn {
+                padding: 4px 8px;
+                font-size: 10px;
+                margin-top: 4px;
+            }
+
+            .week-status {
+                width: 20px;
+                height: 20px;
+                font-size: 14px;
+                top: 4px;
+                right: 4px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                margin: 0 10px;
+            }
+
+            .modal-content h3 {
+                font-size: 18px;
+            }
+
+            .modal-content input {
+                padding: 10px;
+                font-size: 13px;
+            }
+
+            .modal-buttons button {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 16px;
+            }
+
+            .month-nav button {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+
+            .month-display {
+                font-size: 14px;
+            }
+
+            .mascot {
+                width: 50px;
+                height: 50px;
+            }
+
+            .day-cell {
+                min-height: 90px;
+                padding: 4px;
+            }
+
+            .workout-item {
+                padding: 4px;
+                font-size: 10px;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="header-left">
-            <div class="logo">💪 Workout Tracker</div>
+            <div class="logo">💪 Schnuffeline Workout Plan</div>
             <div class="month-nav">
                 <button onclick="changeMonth(-1)">◀ Vorherige</button>
                 <div class="month-display" id="monthDisplay"></div>
@@ -372,6 +538,46 @@
         let currentDate = new Date();
         let currentDay = null;
         let workouts = JSON.parse(localStorage.getItem('workouts')) || {};
+
+        // Workout templates for specific weekdays
+        const weeklyTemplates = {
+            0: [ // Sonntag
+                { name: '🔸 Unterkörper: Kniebeugen 3×10–12', completed: false },
+                { name: '🔸 Unterkörper: Ausfallschritte 3×8 je Seite', completed: false },
+                { name: '🔸 Unterkörper: Glute Bridge 3×12–15', completed: false },
+                { name: '🔸 Oberkörper: Liegestütze 3×6–10', completed: false },
+                { name: '🔸 Oberkörper: Rudern 3×10–12', completed: false },
+                { name: '🔸 Oberkörper: Schulterdrücken 2–3×10', completed: false },
+                { name: '🔸 Core: Plank 3×30–45s', completed: false },
+                { name: '🔸 Core: Dead Bug 3×8–10 je Seite', completed: false }
+            ],
+            1: [ // Montag
+                { name: '🧘 Pilates', completed: false }
+            ],
+            3: [ // Mittwoch
+                { name: '🏃 Laufband 45 Minuten', completed: false }
+            ],
+            4: [ // Donnerstag
+                { name: '🧘 Pilates', completed: false }
+            ]
+        };
+
+        function initializeWorkouts() {
+            // Initialize workouts for the current and next 4 weeks
+            const today = new Date();
+            for (let i = 0; i < 35; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() + i);
+                const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                const dayOfWeek = date.getDay();
+                
+                // Only add template if no workouts exist for this day yet
+                if (!workouts[dateKey] && weeklyTemplates[dayOfWeek]) {
+                    workouts[dateKey] = JSON.parse(JSON.stringify(weeklyTemplates[dayOfWeek]));
+                }
+            }
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+        }
 
         function getWeekNumber(date) {
             const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -626,6 +832,7 @@
 
         function changeMonth(direction) {
             currentDate.setMonth(currentDate.getMonth() + direction);
+            initializeWorkouts(); // Initialize workouts for new visible dates
             renderCalendar();
         }
 
@@ -641,6 +848,8 @@
             }
         });
 
+        // Initialize workouts on first load
+        initializeWorkouts();
         renderCalendar();
     </script>
 </body>
